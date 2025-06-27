@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Encuesta eNPS Anónima</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f0f2f5;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h2, h3 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin: 1rem 0 0.5rem;
+    }
+    input[type=number], textarea {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    button {
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 0.9rem;
+      font-size: 1.1rem;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    .hidden {
+      display: none;
+    }
+    ul {
+      padding-left: 1rem;
+    }
+    @media (max-width: 600px) {
+      .container {
+        margin: 1rem;
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📊 Encuesta eNPS Anónima</h2>
+
+    <div id="form">
+      <label>¿Qué probabilidad hay de que recomiendes VEGA como lugar para trabajar? (0-10)</label>
+      <input type="number" id="score" min="0" max="10" required>
+
+      <label>Comentario (opcional):</label>
+      <textarea id="comment" rows="4"></textarea>
+
+      <button onclick="submitResponse()">Enviar</button>
+    </div>
+
+    <div id="thankyou" class="hidden">
+      <h3>¡Gracias por tu respuesta!</h3>
+    </div>
+
+    <div id="adminButton">
+      <button id="showResultsBtn" style="background-color:#007bff;margin-top:2rem;">Ver Resultados</button>
+    </div>
+
+    <div id="admin" class="hidden">
+      <h3>📈 Resultados recogidos</h3>
+      <canvas id="eNPSChart" width="400" height="300"></canvas>
+      <ul id="resultList"></ul>
+      <button onclick="resetData()" style="background-color:#dc3545;margin-top:2rem;">🗑️ Reiniciar respuestas</button>
+    </div>
+  </div>
+
+  <script>
+    const MAX_RESPONSES = 58;
+    const STORAGE_KEY = 'eNPSresponses';
+    const ALREADY_ANSWERED_KEY = 'eNPS_done';
+
+    document.getElementById('showResultsBtn').addEventListener('click', requestAdminAccess);
+
+    if (localStorage.getItem(ALREADY_ANSWERED_KEY)) {
+      document.getElementById('form').classList.add('hidden');
+      document.getElementById('thankyou').classList.remove('hidden');
+    }
+
+    function submitResponse() {
+      const score = document.getElementById('score').value;
+      const comment = document.getElementById('comment').value.trim();
+
+      if (score === '' || score < 0 || score > 10) {
+        alert('Por favor, introduce una puntuación válida entre 0 y 10.');
+        return;
+      }
+
+      let responses = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      if (responses.length >= MAX_RESPONSES) {
+        alert('Se ha alcanzado el número máximo de respuestas.');
+        return;
+      }
+
+      responses.push({ score: Number(score), comment });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(responses));
+      localStorage.setItem(ALREADY_ANSWERED_KEY, 'true');
+
+      document.getElementById('form').classList.add('hidden');
+      document.getElementById('thankyou').classList.remove('hidden');
+    }
+
+    function requestAdminAccess() {
+      const pass = prompt('Introduce la contraseña de admin:');
+      if (pass === 'vega2025') {
+        showResults();
+      } else {
+        alert('Contraseña incorrecta');
+      }
+    }
+
+    function showResults() {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      const list = document.getElementById('resultList');
+      list.innerHTML = '';
+
+      let promoters = 0, passives = 0, detractors = 0;
+
+      data.forEach((r, i) => {
+        const item = document.createElement('li');
+        item.innerText = `#${i+1}: Puntuación: ${r.score}, Comentario: ${r.comment || '—'}`;
+        list.appendChild(item);
+
+        if (r.score >= 9) promoters++;
+        else if (r.score >= 7) passives++;
+        else detractors++;
+      });
+
+      const total = data.length || 1;
+      const eNPS = Math.round(((promoters - detractors) / total) * 100);
+
+      const ctx = document.getElementById('eNPSChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Promotores', 'Pasivos', 'Detractores'],
+          datasets: [{
+            label: 'Número de respuestas',
+            data: [promoters, passives, detractors],
+            backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+          }]
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: `Puntuación eNPS actual: ${eNPS}`,
+              font: { size: 18 }
+            }
+          },
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+
+      document.getElementById('admin').classList.remove('hidden');
+    }
+
+    function resetData() {
+      const pass = prompt('Introduce la contraseña para reiniciar:');
+      if (pass === 'vega2025') {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(ALREADY_ANSWERED_KEY);
+        alert('Respuestas eliminadas.');
+        location.reload();
+      } else {
+        alert('Contraseña incorrecta');
+      }
+    }
+  </script>
+</body>
+</html>
