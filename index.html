@@ -16,7 +16,7 @@
       color: #333;
     }
     .container {
-      max-width: 600px;
+      max-width: 700px;
       margin: 3rem auto;
       padding: 2rem;
       background: #fff;
@@ -54,12 +54,10 @@
     button:hover {
       background-color: #218838;
     }
-    .hidden {
-      display: none;
-    }
-    ul {
-      padding-left: 1rem;
-    }
+    .hidden { display: none; }
+    table { width: 100%; margin-top: 2rem; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+    th { background-color: #f8f8f8; }
     @media (max-width: 600px) {
       .container {
         margin: 1rem;
@@ -93,12 +91,20 @@
     <div id="admin" class="hidden">
       <h3>📈 Resultados recogidos</h3>
       <canvas id="eNPSChart" width="400" height="300"></canvas>
-      <ul id="resultList"></ul>
+      <table id="resultTable">
+        <thead>
+          <tr>
+            <th>#</th><th>Puntuación</th><th>Comentario</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
       <button onclick="resetData()" style="background-color:#dc3545;margin-top:2rem;">🗑️ Reiniciar respuestas</button>
     </div>
   </div>
 
   <script>
+    // Configuración Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCI6wQ1s57ZDLcBpR31vQ-Iu67JEOCnMWk",
       authDomain: "vega-enps.firebaseapp.com",
@@ -108,7 +114,6 @@
       appId: "1:950555604990:web:7fcf1138b1e1c741fbb2af",
       measurementId: "G-7983497W5N"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
@@ -119,8 +124,7 @@
       document.getElementById('thankyou').classList.remove('hidden');
     }
 
-    document.getElementById('showResultsBtn').addEventListener('click', requestAdminAccess);
-
+    // Enviar respuesta
     async function submitResponse() {
       const score = document.getElementById('score').value;
       const comment = document.getElementById('comment').value.trim();
@@ -145,28 +149,29 @@
       }
     }
 
-    function requestAdminAccess() {
+    // Acceso admin
+    document.getElementById('showResultsBtn').addEventListener('click', () => {
       const pass = prompt('Introduce la contraseña de admin:');
       if (pass === 'vega2025') {
         showResults();
       } else {
         alert('Contraseña incorrecta');
       }
-    }
+    });
 
+    // Mostrar resultados
     async function showResults() {
-      const list = document.getElementById('resultList');
-      list.innerHTML = '';
-
-      let promoters = 0, passives = 0, detractors = 0;
-
       const snapshot = await db.collection("responses").get();
       const data = snapshot.docs.map(doc => doc.data());
 
+      let promoters = 0, passives = 0, detractors = 0;
+      const tbody = document.querySelector("#resultTable tbody");
+      tbody.innerHTML = '';
+
       data.forEach((r, i) => {
-        const item = document.createElement('li');
-        item.innerText = `#${i+1}: Puntuación: ${r.score}, Comentario: ${r.comment || '—'}`;
-        list.appendChild(item);
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${i + 1}</td><td>${r.score}</td><td>${r.comment || '—'}</td>`;
+        tbody.appendChild(row);
 
         if (r.score >= 9) promoters++;
         else if (r.score >= 7) passives++;
@@ -205,12 +210,25 @@
       document.getElementById('admin').classList.remove('hidden');
     }
 
-    function resetData() {
+    // Reiniciar respostes
+    async function resetData() {
       const pass = prompt('Introduce la contraseña para reiniciar:');
-      if (pass === 'vega2025') {
-        alert('Esta función aún no borra datos de Firebase. Deberás hacerlo manualmente.');
-      } else {
+      if (pass !== 'vega2025') {
         alert('Contraseña incorrecta');
+        return;
+      }
+
+      try {
+        const snapshot = await db.collection("responses").get();
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        localStorage.removeItem(ALREADY_ANSWERED_KEY);
+        alert('Respuestas eliminadas.');
+        location.reload();
+      } catch (e) {
+        alert('Error eliminando las respuestas.');
+        console.error(e);
       }
     }
   </script>
