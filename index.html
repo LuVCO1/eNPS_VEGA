@@ -3,110 +3,88 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Encuesta eNPS VEGA</title>
+  <title>Encuesta eNPS Anónima</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
+    * { box-sizing: border-box; }
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      background-color: #f4f6f8;
+      background: #f4f6f8;
       color: #333;
     }
     .container {
-      max-width: 700px;
+      max-width: 650px;
       margin: 2rem auto;
-      background: #fff;
       padding: 2rem;
+      background: #fff;
       border-radius: 16px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    h2, h3 {
+      text-align: center;
     }
     img.logo {
       display: block;
       margin: 0 auto 1rem;
-      width: 90px;
-    }
-    h2, h3 {
-      text-align: center;
-      margin-bottom: 1rem;
+      max-width: 120px;
     }
     p.description {
       text-align: center;
+      font-size: 0.95rem;
       color: #555;
       margin-bottom: 2rem;
     }
     label {
       font-weight: bold;
-      margin-top: 1rem;
       display: block;
+      margin: 1rem 0 0.5rem;
     }
     select, textarea {
       width: 100%;
       padding: 0.8rem;
-      margin-top: 0.3rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
       font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 10px;
     }
     button {
       width: 100%;
       margin-top: 1.5rem;
-      padding: 1rem;
+      padding: 0.9rem;
       font-size: 1.1rem;
       background-color: #28a745;
-      color: #fff;
+      color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       cursor: pointer;
+      transition: background 0.3s;
     }
     button:hover {
       background-color: #218838;
     }
-    .hidden {
-      display: none;
+    .hidden { display: none; }
+    #chartContainer {
+      margin-top: 2rem;
     }
-    canvas {
-      margin: 2rem 0;
-    }
-    ul {
-      padding-left: 1rem;
-    }
-    .admin-controls button {
-      background-color: #dc3545;
-    }
-    @media(max-width: 600px) {
-      .container {
-        margin: 1rem;
-        padding: 1.5rem;
-      }
-    }
+    ul { padding-left: 1rem; margin-top: 1rem; }
   </style>
 </head>
 <body>
   <div class="container">
-    <img class="logo" src="ISOTIPO_VEGA_NEGRO.png" alt="Logo VEGA Chargers">
-    <h2>📊 Encuesta eNPS VEGA</h2>
+    <img src="ISOTIPO_VEGA_NEGRO.png" alt="Logo VEGA Chargers" class="logo"/>
+
+    <h2>📊 Encuesta eNPS Anónima</h2>
     <p class="description">
-      El <strong>eNPS (Employee Net Promoter Score)</strong> es una herramienta que nos ayuda a medir qué tan probable es que recomiendes VEGA como lugar para trabajar. 
-      Esta <strong>encuesta es completamente anónima</strong> y nos permite conocer mejor cómo te sientes, así como identificar oportunidades para seguir mejorando el entorno laboral.
+      El eNPS (Employee Net Promoter Score) es un indicador que mide la lealtad y satisfacción de las personas con su lugar de trabajo. Esta encuesta es <strong>totalmente anónima</strong> y nos ayuda a identificar fortalezas y oportunidades de mejora en VEGA. ¡Gracias por tu participación!
     </p>
 
     <div id="form">
-      <label>Puntuación (0-10):</label>
+      <label>¿Qué probabilidad hay de que recomiendes VEGA como lugar para trabajar?</label>
       <select id="score" required>
         <option value="">Selecciona una puntuación</option>
-        <option value="0">0</option>
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-        <option value="6">6</option>
-        <option value="7">7</option>
-        <option value="8">8</option>
-        <option value="9">9</option>
-        <option value="10">10</option>
+        ${[...Array(11).keys()].map(n => `<option value="${n}">${n}</option>`).join('')}
       </select>
 
       <label>Cuenta el motivo de la puntuación y añade sugerencias para mejorarla (opcional):</label>
@@ -125,11 +103,11 @@
 
     <div id="admin" class="hidden">
       <h3>📈 Resultados recogidos</h3>
-      <canvas id="eNPSChart"></canvas>
-      <ul id="resultList"></ul>
-      <div class="admin-controls">
-        <button onclick="resetData()">🗑️ Reiniciar respuestas</button>
+      <div id="chartContainer">
+        <canvas id="eNPSChart" width="400" height="300"></canvas>
       </div>
+      <ul id="resultList"></ul>
+      <button onclick="resetData()" style="background-color:#dc3545;margin-top:2rem;">🗑️ Reiniciar respuestas</button>
     </div>
   </div>
 
@@ -143,57 +121,57 @@
       appId: "1:950555604990:web:7fcf1138b1e1c741fbb2af",
       measurementId: "G-7983497W5N"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-
     const ALREADY_ANSWERED_KEY = 'eNPS_done';
 
     if (localStorage.getItem(ALREADY_ANSWERED_KEY)) {
-      document.getElementById('form').classList.add('hidden');
-      document.getElementById('thankyou').classList.remove('hidden');
+      document.getElementById('form')?.classList.add('hidden');
+      document.getElementById('thankyou')?.classList.remove('hidden');
     }
 
-    function submitResponse() {
+    async function submitResponse() {
       const score = document.getElementById('score').value;
       const comment = document.getElementById('comment').value.trim();
 
       if (score === '') {
-        alert('Por favor, selecciona una puntuación válida entre 0 y 10.');
+        alert('Selecciona una puntuación entre 0 y 10.');
         return;
       }
 
-      db.collection("responses").add({
-        score: Number(score),
-        comment: comment,
-        timestamp: new Date().toISOString()
-      }).then(() => {
+      try {
+        await db.collection("responses").add({
+          score: Number(score),
+          comment: comment,
+          timestamp: new Date().toISOString()
+        });
         localStorage.setItem(ALREADY_ANSWERED_KEY, 'true');
         document.getElementById('form').classList.add('hidden');
         document.getElementById('thankyou').classList.remove('hidden');
-      }).catch((e) => {
-        alert('Error al guardar la respuesta en Firebase.');
-        console.error("Error adding document: ", e);
-      });
+      } catch (error) {
+        alert('Error al guardar en Firebase');
+        console.error(error);
+      }
     }
 
     document.getElementById('showResultsBtn').addEventListener('click', () => {
       const pass = prompt('Introduce la contraseña de admin:');
-      if (pass === 'vega2025') showResults();
+      if (pass === 'VEGA123') showResults();
       else alert('Contraseña incorrecta');
     });
 
     async function showResults() {
+      const list = document.getElementById('resultList');
+      list.innerHTML = '';
+
+      let promoters = 0, passives = 0, detractors = 0;
       const snapshot = await db.collection("responses").get();
       const data = snapshot.docs.map(doc => doc.data());
 
-      const list = document.getElementById('resultList');
-      list.innerHTML = "";
-
-      let promoters = 0, passives = 0, detractors = 0;
-
       data.forEach((r, i) => {
         const item = document.createElement('li');
-        item.textContent = `#${i+1}: Puntuación: ${r.score}, Comentario: ${r.comment || '—'}`;
+        item.innerText = `#${i + 1}: Puntuación: ${r.score}, Comentario: ${r.comment || '—'}`;
         list.appendChild(item);
 
         if (r.score >= 9) promoters++;
@@ -210,6 +188,7 @@
         data: {
           labels: ['Promotores', 'Pasivos', 'Detractores'],
           datasets: [{
+            label: 'Distribución',
             data: [
               (promoters / total * 100).toFixed(1),
               (passives / total * 100).toFixed(1),
@@ -225,20 +204,7 @@
               text: `eNPS actual: ${eNPS}`,
               font: { size: 18 }
             },
-            legend: {
-              position: 'right',
-              labels: {
-                generateLabels: chart => {
-                  const data = chart.data;
-                  return data.labels.map((label, i) => ({
-                    text: `${label} ${data.datasets[0].data[i]}%`,
-                    fillStyle: data.datasets[0].backgroundColor[i],
-                    strokeStyle: '#fff',
-                    lineWidth: 2
-                  }));
-                }
-              }
-            }
+            legend: { position: 'right' }
           }
         }
       });
@@ -248,7 +214,7 @@
 
     function resetData() {
       const pass = prompt('Introduce la contraseña para reiniciar:');
-      if (pass === 'vega2025') {
+      if (pass === 'VEGA123') {
         db.collection("responses").get().then(snapshot => {
           const batch = db.batch();
           snapshot.docs.forEach(doc => batch.delete(doc.ref));
