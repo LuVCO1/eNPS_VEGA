@@ -85,7 +85,7 @@
 </head>
 <body>
   <div class="container">
-    <img class="logo" src="ISOTIPO_VEGA_NEGRO (1).png" alt="Logo VEGA Chargers">
+    <img class="logo" src="ISOTIPO_VEGA_NEGRO.png" alt="Logo VEGA Chargers">
     <h2>📊 Encuesta eNPS VEGA</h2>
     <p class="description">
       El <strong>eNPS (Employee Net Promoter Score)</strong> es una herramienta que nos ayuda a medir qué tan probable es que recomiendes VEGA como lugar para trabajar. 
@@ -96,7 +96,17 @@
       <label>Puntuación (0-10):</label>
       <select id="score" required>
         <option value="">Selecciona una puntuación</option>
-        ${[...Array(11).keys()].map(n => `<option value="${n}">${n}</option>`).join('')}
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
       </select>
 
       <label>Cuenta el motivo de la puntuación y añade sugerencias para mejorarla (opcional):</label>
@@ -139,8 +149,8 @@
     const ALREADY_ANSWERED_KEY = 'eNPS_done';
 
     if (localStorage.getItem(ALREADY_ANSWERED_KEY)) {
-      document.getElementById('form')?.classList.add('hidden');
-      document.getElementById('thankyou')?.classList.remove('hidden');
+      document.getElementById('form').classList.add('hidden');
+      document.getElementById('thankyou').classList.remove('hidden');
     }
 
     function submitResponse() {
