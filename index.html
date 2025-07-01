@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Encuesta eNPS Anónima</title>
+  <title>Encuesta eNPS</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -88,7 +88,7 @@
 <body>
   <div class="container">
     <img src="ISOTIPO_VEGA_NEGRO.png" alt="VEGA Logo" class="logo">
-    <h2>📊 Encuesta eNPS Anónima</h2>
+    <h2>📊 Encuesta eNPS</h2>
     <p class="intro">
       El eNPS (Employee Net Promoter Score) mide el grado de recomendación de VEGA como lugar para trabajar.
       Esta encuesta es completamente anónima y nos ayuda a mejorar tu experiencia como empleado/a.
@@ -187,7 +187,7 @@
 
     document.getElementById("showResultsBtn").addEventListener("click", () => {
       const pass = prompt("Introduce la contraseña de admin:");
-      if (pass === "vega2025") {
+      if (pass === "VEGA123!321") {
         showResults();
       } else {
         alert("Contraseña incorrecta");
@@ -248,7 +248,7 @@
 
     function resetData() {
       const pass = prompt("Introduce la contraseña para reiniciar:");
-      if (pass === "vega2025") {
+      if (pass === "VEGA123!321") {
         db.collection("responses").get().then(snapshot => {
           const batch = db.batch();
           snapshot.docs.forEach(doc => batch.delete(doc.ref));
