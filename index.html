@@ -67,6 +67,19 @@
     }
     .hidden { display: none; }
     canvas { margin-top: 1.5rem; }
+    table {
+      width: 100%;
+      margin-top: 2rem;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.6rem;
+      text-align: left;
+    }
+    th {
+      background-color: #f8f8f8;
+    }
     @media (max-width: 600px) {
       .container { margin: 1rem; padding: 1.5rem; }
     }
@@ -76,7 +89,10 @@
   <div class="container">
     <img src="ISOTIPO_VEGA_NEGRO.png" alt="VEGA Logo" class="logo">
     <h2>📊 Encuesta eNPS Anónima</h2>
-    <p class="intro">El eNPS (Employee Net Promoter Score) mide el grado de recomendación de VEGA como lugar para trabajar. Esta encuesta es completamente anónima y nos ayuda a mejorar tu experiencia como empleado/a.</p>
+    <p class="intro">
+      El eNPS (Employee Net Promoter Score) mide el grado de recomendación de VEGA como lugar para trabajar.
+      Esta encuesta es completamente anónima y nos ayuda a mejorar tu experiencia como empleado/a.
+    </p>
 
     <div id="form">
       <label>¿Qué probabilidad hay de que recomiendes VEGA como lugar para trabajar?</label>
@@ -106,7 +122,20 @@
 
     <div id="admin" class="hidden">
       <h3>📈 Resultados recogidos</h3>
+      <p id="responseCount" style="text-align:center;font-weight:bold;"></p>
       <canvas id="eNPSChart" width="400" height="300"></canvas>
+
+      <table id="resultTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Puntuación</th>
+            <th>Comentario</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
       <button onclick="resetData()" style="background-color:#dc3545;margin-top:2rem;">🗑️ Reiniciar respuestas</button>
     </div>
   </div>
@@ -171,7 +200,14 @@
 
       let promoters = 0, passives = 0, detractors = 0;
 
-      data.forEach(r => {
+      const tableBody = document.querySelector("#resultTable tbody");
+      tableBody.innerHTML = "";
+
+      data.forEach((r, i) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${i + 1}</td><td>${r.score}</td><td>${r.comment || '—'}</td>`;
+        tableBody.appendChild(row);
+
         if (r.score >= 9) promoters++;
         else if (r.score >= 7) passives++;
         else detractors++;
@@ -179,6 +215,8 @@
 
       const total = data.length || 1;
       const eNPS = ((promoters - detractors) / total * 100).toFixed(0);
+      const responsePercentage = ((data.length / 58) * 100).toFixed(0);
+      document.getElementById('responseCount').innerText = `Han contestado ${data.length} de 58 empleados (${responsePercentage}%)`;
 
       const ctx = document.getElementById('eNPSChart').getContext('2d');
       new Chart(ctx, {
