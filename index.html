@@ -1,63 +1,85 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Encuesta eNPS Anónima</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Encuesta eNPS Vega</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
-    * { box-sizing: border-box; }
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
-      background: #f0f2f5;
+      font-family: 'Arial', sans-serif;
+      background-color: #f9f9f9;
       color: #333;
+    }
+    header {
+      text-align: center;
+      padding: 2rem 1rem 1rem;
+    }
+    header img {
+      max-height: 80px;
     }
     .container {
       max-width: 700px;
-      margin: 3rem auto;
+      margin: auto;
+      background: white;
       padding: 2rem;
-      background: #fff;
       border-radius: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     }
     h2, h3 {
       text-align: center;
-      margin-bottom: 1.5rem;
+      margin-top: 0;
     }
     label {
       font-weight: bold;
+      margin-top: 1rem;
       display: block;
-      margin: 1rem 0 0.5rem;
     }
-    input[type=number], textarea {
+    input, textarea {
       width: 100%;
       padding: 0.8rem;
+      margin-top: 0.5rem;
       border: 1px solid #ccc;
       border-radius: 10px;
       font-size: 1rem;
     }
     button {
-      width: 100%;
       margin-top: 1.5rem;
       padding: 0.9rem;
+      width: 100%;
       font-size: 1.1rem;
-      background-color: #28a745;
-      color: white;
       border: none;
       border-radius: 12px;
+      background-color: #00b4e3;
+      color: white;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: background 0.3s ease;
     }
     button:hover {
-      background-color: #218838;
+      background-color: #009fc4;
     }
-    .hidden { display: none; }
-    table { width: 100%; margin-top: 2rem; border-collapse: collapse; }
-    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
-    th { background-color: #f8f8f8; }
+    .hidden {
+      display: none;
+    }
+    table {
+      width: 100%;
+      margin-top: 1.5rem;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.6rem;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    canvas {
+      margin-top: 2rem;
+    }
     @media (max-width: 600px) {
       .container {
         margin: 1rem;
@@ -67,16 +89,17 @@
   </style>
 </head>
 <body>
+  <header>
+    <img src="ISOTIPO_VEGA_NEGRO.png" alt="Logo Vega Chargers" />
+  </header>
   <div class="container">
     <h2>📊 Encuesta eNPS Anónima</h2>
 
     <div id="form">
-      <label>¿Qué probabilidad hay de que recomiendes VEGA como lugar para trabajar? (0-10)</label>
-      <input type="number" id="score" min="0" max="10" required>
-
-      <label>Comentario (opcional):</label>
+      <label for="score">¿Qué probabilidad hay de que recomiendes VEGA como lugar para trabajar? (0–10)</label>
+      <input type="number" id="score" min="0" max="10" required />
+      <label for="comment">Comentario (opcional):</label>
       <textarea id="comment" rows="4"></textarea>
-
       <button onclick="submitResponse()">Enviar</button>
     </div>
 
@@ -85,38 +108,31 @@
     </div>
 
     <div id="adminButton">
-      <button id="showResultsBtn" style="background-color:#007bff;margin-top:2rem;">Ver Resultados</button>
+      <button id="showResultsBtn" style="background-color:#007bff;">Ver Resultados</button>
     </div>
 
     <div id="admin" class="hidden">
       <h3>📈 Resultados recogidos</h3>
-      <canvas id="eNPSChart" width="400" height="300"></canvas>
+      <canvas id="eNPSChart" height="300"></canvas>
       <table id="resultTable">
-        <thead>
-          <tr>
-            <th>#</th><th>Puntuación</th><th>Comentario</th>
-          </tr>
-        </thead>
+        <thead><tr><th>#</th><th>Puntuación</th><th>Comentario</th></tr></thead>
         <tbody></tbody>
       </table>
-      <button onclick="resetData()" style="background-color:#dc3545;margin-top:2rem;">🗑️ Reiniciar respuestas</button>
+      <button onclick="resetData()" style="background-color:#dc3545;">🗑️ Reiniciar respuestas</button>
     </div>
   </div>
 
   <script>
-    // Configuración Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCI6wQ1s57ZDLcBpR31vQ-Iu67JEOCnMWk",
       authDomain: "vega-enps.firebaseapp.com",
       projectId: "vega-enps",
       storageBucket: "vega-enps.firebasestorage.app",
       messagingSenderId: "950555604990",
-      appId: "1:950555604990:web:7fcf1138b1e1c741fbb2af",
-      measurementId: "G-7983497W5N"
+      appId: "1:950555604990:web:7fcf1138b1e1c741fbb2af"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-
     const ALREADY_ANSWERED_KEY = 'eNPS_done';
 
     if (localStorage.getItem(ALREADY_ANSWERED_KEY)) {
@@ -124,7 +140,6 @@
       document.getElementById('thankyou').classList.remove('hidden');
     }
 
-    // Enviar respuesta
     async function submitResponse() {
       const score = document.getElementById('score').value;
       const comment = document.getElementById('comment').value.trim();
@@ -137,7 +152,7 @@
       try {
         await db.collection("responses").add({
           score: Number(score),
-          comment: comment,
+          comment,
           timestamp: new Date().toISOString()
         });
         localStorage.setItem(ALREADY_ANSWERED_KEY, 'true');
@@ -149,28 +164,23 @@
       }
     }
 
-    // Acceso admin
     document.getElementById('showResultsBtn').addEventListener('click', () => {
       const pass = prompt('Introduce la contraseña de admin:');
-      if (pass === 'vega2025') {
-        showResults();
-      } else {
-        alert('Contraseña incorrecta');
-      }
+      if (pass === 'vega2025') showResults();
+      else alert('Contraseña incorrecta');
     });
 
-    // Mostrar resultados
     async function showResults() {
       const snapshot = await db.collection("responses").get();
       const data = snapshot.docs.map(doc => doc.data());
-
-      let promoters = 0, passives = 0, detractors = 0;
       const tbody = document.querySelector("#resultTable tbody");
       tbody.innerHTML = '';
 
+      let promoters = 0, passives = 0, detractors = 0;
+
       data.forEach((r, i) => {
         const row = document.createElement('tr');
-        row.innerHTML = `<td>${i + 1}</td><td>${r.score}</td><td>${r.comment || '—'}</td>`;
+        row.innerHTML = `<td>${i+1}</td><td>${r.score}</td><td>${r.comment || '—'}</td>`;
         tbody.appendChild(row);
 
         if (r.score >= 9) promoters++;
@@ -179,7 +189,7 @@
       });
 
       const total = data.length || 1;
-      const eNPS = Math.round(((promoters - detractors) / total) * 100);
+      const eNPS = Math.round(((promoters / total) - (detractors / total)) * 100);
 
       const ctx = document.getElementById('eNPSChart').getContext('2d');
       new Chart(ctx, {
@@ -187,7 +197,7 @@
         data: {
           labels: ['Promotores', 'Pasivos', 'Detractores'],
           datasets: [{
-            label: 'Número de respuestas',
+            label: 'Nº de respuestas',
             data: [promoters, passives, detractors],
             backgroundColor: ['#28a745', '#ffc107', '#dc3545']
           }]
@@ -210,7 +220,6 @@
       document.getElementById('admin').classList.remove('hidden');
     }
 
-    // Reiniciar respostes
     async function resetData() {
       const pass = prompt('Introduce la contraseña para reiniciar:');
       if (pass !== 'vega2025') {
@@ -218,18 +227,13 @@
         return;
       }
 
-      try {
-        const snapshot = await db.collection("responses").get();
-        const batch = db.batch();
-        snapshot.docs.forEach(doc => batch.delete(doc.ref));
-        await batch.commit();
-        localStorage.removeItem(ALREADY_ANSWERED_KEY);
-        alert('Respuestas eliminadas.');
-        location.reload();
-      } catch (e) {
-        alert('Error eliminando las respuestas.');
-        console.error(e);
-      }
+      const snapshot = await db.collection("responses").get();
+      const batch = db.batch();
+      snapshot.docs.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      localStorage.removeItem(ALREADY_ANSWERED_KEY);
+      alert('Respuestas eliminadas.');
+      location.reload();
     }
   </script>
 </body>
