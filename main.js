@@ -1,5 +1,3 @@
-# Guardar el script proporcionado por el usuario en un archivo llamado 'main.js'
-javascript_code = """
 // Config Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCI6wQ1s57ZDLcBpR31vQ-Iu67JEOCnMWk",
@@ -121,10 +119,4 @@ function resetData() {
     alert("Contraseña incorrecta");
   }
 }
-"""
 
-file_path = "/mnt/data/main.js"
-with open(file_path, "w", encoding="utf-8") as f:
-    f.write(javascript_code)
-
-file_path
