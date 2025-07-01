@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Encuesta eNPS Anónima</title>
+  <title>Encuesta eNPS</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -75,7 +75,7 @@
   <div class="container">
     <img src="ISOTIPO_VEGA_NEGRO.png" alt="Logo VEGA Chargers" class="logo"/>
 
-    <h2>📊 Encuesta eNPS Anónima</h2>
+    <h2>📊 Encuesta eNPS</h2>
     <p class="description">
       El eNPS (Employee Net Promoter Score) es un indicador que mide la lealtad y satisfacción de las personas con su lugar de trabajo. Esta encuesta es <strong>totalmente anónima</strong> y nos ayuda a identificar fortalezas y oportunidades de mejora en VEGA. ¡Gracias por tu participación!
     </p>
@@ -84,7 +84,17 @@
       <label>¿Qué probabilidad hay de que recomiendes VEGA como lugar para trabajar?</label>
       <select id="score" required>
         <option value="">Selecciona una puntuación</option>
-        ${[...Array(11).keys()].map(n => `<option value="${n}">${n}</option>`).join('')}
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>      
       </select>
 
       <label>Cuenta el motivo de la puntuación y añade sugerencias para mejorarla (opcional):</label>
