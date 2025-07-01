@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Encuesta eNPS Anónima</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -97,18 +99,29 @@
   </div>
 
   <script>
-    const MAX_RESPONSES = 58;
-    const STORAGE_KEY = 'eNPSresponses';
-    const ALREADY_ANSWERED_KEY = 'eNPS_done';
+    const firebaseConfig = {
+      apiKey: "AIzaSyCI6wQ1s57ZDLcBpR31vQ-Iu67JEOCnMWk",
+      authDomain: "vega-enps.firebaseapp.com",
+      projectId: "vega-enps",
+      storageBucket: "vega-enps.firebasestorage.app",
+      messagingSenderId: "950555604990",
+      appId: "1:950555604990:web:7fcf1138b1e1c741fbb2af",
+      measurementId: "G-7983497W5N"
+    };
 
-    document.getElementById('showResultsBtn').addEventListener('click', requestAdminAccess);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const ALREADY_ANSWERED_KEY = 'eNPS_done';
 
     if (localStorage.getItem(ALREADY_ANSWERED_KEY)) {
       document.getElementById('form').classList.add('hidden');
       document.getElementById('thankyou').classList.remove('hidden');
     }
 
-    function submitResponse() {
+    document.getElementById('showResultsBtn').addEventListener('click', requestAdminAccess);
+
+    async function submitResponse() {
       const score = document.getElementById('score').value;
       const comment = document.getElementById('comment').value.trim();
 
@@ -117,18 +130,19 @@
         return;
       }
 
-      let responses = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-      if (responses.length >= MAX_RESPONSES) {
-        alert('Se ha alcanzado el número máximo de respuestas.');
-        return;
+      try {
+        await db.collection("responses").add({
+          score: Number(score),
+          comment: comment,
+          timestamp: new Date().toISOString()
+        });
+        localStorage.setItem(ALREADY_ANSWERED_KEY, 'true');
+        document.getElementById('form').classList.add('hidden');
+        document.getElementById('thankyou').classList.remove('hidden');
+      } catch (error) {
+        alert('Error al guardar en Firebase');
+        console.error(error);
       }
-
-      responses.push({ score: Number(score), comment });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(responses));
-      localStorage.setItem(ALREADY_ANSWERED_KEY, 'true');
-
-      document.getElementById('form').classList.add('hidden');
-      document.getElementById('thankyou').classList.remove('hidden');
     }
 
     function requestAdminAccess() {
@@ -140,12 +154,14 @@
       }
     }
 
-    function showResults() {
-      const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    async function showResults() {
       const list = document.getElementById('resultList');
       list.innerHTML = '';
 
       let promoters = 0, passives = 0, detractors = 0;
+
+      const snapshot = await db.collection("responses").get();
+      const data = snapshot.docs.map(doc => doc.data());
 
       data.forEach((r, i) => {
         const item = document.createElement('li');
@@ -192,10 +208,7 @@
     function resetData() {
       const pass = prompt('Introduce la contraseña para reiniciar:');
       if (pass === 'vega2025') {
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(ALREADY_ANSWERED_KEY);
-        alert('Respuestas eliminadas.');
-        location.reload();
+        alert('Esta función aún no borra datos de Firebase. Deberás hacerlo manualmente.');
       } else {
         alert('Contraseña incorrecta');
       }
