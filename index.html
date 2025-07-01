@@ -2,36 +2,39 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Encuesta eNPS Vega</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Encuesta eNPS VEGA</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
     body {
+      font-family: Arial, sans-serif;
       margin: 0;
-      font-family: 'Arial', sans-serif;
-      background-color: #f9f9f9;
+      background-color: #f4f6f8;
       color: #333;
-    }
-    header {
-      text-align: center;
-      padding: 2rem 1rem 1rem;
-    }
-    header img {
-      max-height: 80px;
     }
     .container {
       max-width: 700px;
-      margin: auto;
-      background: white;
+      margin: 2rem auto;
+      background: #fff;
       padding: 2rem;
-      border-radius: 20px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+    img.logo {
+      display: block;
+      margin: 0 auto 1rem;
+      width: 90px;
     }
     h2, h3 {
       text-align: center;
-      margin-top: 0;
+      margin-bottom: 1rem;
+    }
+    p.description {
+      text-align: center;
+      color: #555;
+      margin-bottom: 2rem;
     }
     label {
       font-weight: bold;
@@ -41,46 +44,38 @@
     select, textarea {
       width: 100%;
       padding: 0.8rem;
-      margin-top: 0.5rem;
+      margin-top: 0.3rem;
       border: 1px solid #ccc;
-      border-radius: 10px;
+      border-radius: 8px;
       font-size: 1rem;
     }
     button {
-      margin-top: 1.5rem;
-      padding: 0.9rem;
       width: 100%;
+      margin-top: 1.5rem;
+      padding: 1rem;
       font-size: 1.1rem;
+      background-color: #28a745;
+      color: #fff;
       border: none;
-      border-radius: 12px;
-      background-color: #00b4e3;
-      color: white;
+      border-radius: 10px;
       cursor: pointer;
-      transition: background 0.3s ease;
     }
     button:hover {
-      background-color: #009fc4;
+      background-color: #218838;
     }
     .hidden {
       display: none;
     }
-    table {
-      width: 100%;
-      margin-top: 1.5rem;
-      border-collapse: collapse;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 0.6rem;
-      text-align: left;
-    }
-    th {
-      background-color: #f2f2f2;
-    }
     canvas {
-      margin-top: 2rem;
+      margin: 2rem 0;
     }
-    @media (max-width: 600px) {
+    ul {
+      padding-left: 1rem;
+    }
+    .admin-controls button {
+      background-color: #dc3545;
+    }
+    @media(max-width: 600px) {
       .container {
         margin: 1rem;
         padding: 1.5rem;
@@ -89,22 +84,22 @@
   </style>
 </head>
 <body>
-  <header>
-    <img src="ISOTIPO_VEGA_NEGRO.png" alt="Logo Vega Chargers" />
-  </header>
   <div class="container">
-    <h2>📊 Encuesta eNPS Anónima</h2>
+    <img class="logo" src="ISOTIPO_VEGA_NEGRO (1).png" alt="Logo VEGA Chargers">
+    <h2>📊 Encuesta eNPS VEGA</h2>
+    <p class="description">
+      El <strong>eNPS (Employee Net Promoter Score)</strong> es una herramienta que nos ayuda a medir qué tan probable es que recomiendes VEGA como lugar para trabajar. 
+      Esta <strong>encuesta es completamente anónima</strong> y nos permite conocer mejor cómo te sientes, así como identificar oportunidades para seguir mejorando el entorno laboral.
+    </p>
 
     <div id="form">
-      <label for="score">¿Qué probabilidad hay de que recomiendes VEGA como lugar para trabajar?</label>
+      <label>Puntuación (0-10):</label>
       <select id="score" required>
-        <option value="" disabled selected>Selecciona una puntuación</option>
-        <option>0</option><option>1</option><option>2</option><option>3</option>
-        <option>4</option><option>5</option><option>6</option><option>7</option>
-        <option>8</option><option>9</option><option>10</option>
+        <option value="">Selecciona una puntuación</option>
+        ${[...Array(11).keys()].map(n => `<option value="${n}">${n}</option>`).join('')}
       </select>
 
-      <label for="comment">Cuenta el motivo de la puntuación y añade sugerencias para mejorarla (opcional):</label>
+      <label>Cuenta el motivo de la puntuación y añade sugerencias para mejorarla (opcional):</label>
       <textarea id="comment" rows="4"></textarea>
 
       <button onclick="submitResponse()">Enviar</button>
@@ -115,17 +110,16 @@
     </div>
 
     <div id="adminButton">
-      <button id="showResultsBtn" style="background-color:#007bff;">Ver Resultados</button>
+      <button id="showResultsBtn" style="background-color:#007bff;margin-top:2rem;">Ver Resultados</button>
     </div>
 
     <div id="admin" class="hidden">
       <h3>📈 Resultados recogidos</h3>
-      <canvas id="eNPSChart" height="300"></canvas>
-      <table id="resultTable">
-        <thead><tr><th>#</th><th>Puntuación</th><th>Comentario</th></tr></thead>
-        <tbody></tbody>
-      </table>
-      <button onclick="resetData()" style="background-color:#dc3545;">🗑️ Reiniciar respuestas</button>
+      <canvas id="eNPSChart"></canvas>
+      <ul id="resultList"></ul>
+      <div class="admin-controls">
+        <button onclick="resetData()">🗑️ Reiniciar respuestas</button>
+      </div>
     </div>
   </div>
 
@@ -136,39 +130,40 @@
       projectId: "vega-enps",
       storageBucket: "vega-enps.firebasestorage.app",
       messagingSenderId: "950555604990",
-      appId: "1:950555604990:web:7fcf1138b1e1c741fbb2af"
+      appId: "1:950555604990:web:7fcf1138b1e1c741fbb2af",
+      measurementId: "G-7983497W5N"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+
     const ALREADY_ANSWERED_KEY = 'eNPS_done';
 
     if (localStorage.getItem(ALREADY_ANSWERED_KEY)) {
-      document.getElementById('form').classList.add('hidden');
-      document.getElementById('thankyou').classList.remove('hidden');
+      document.getElementById('form')?.classList.add('hidden');
+      document.getElementById('thankyou')?.classList.remove('hidden');
     }
 
-    async function submitResponse() {
+    function submitResponse() {
       const score = document.getElementById('score').value;
       const comment = document.getElementById('comment').value.trim();
 
-      if (score === '' || score < 0 || score > 10) {
-        alert('Por favor, introduce una puntuación válida entre 0 y 10.');
+      if (score === '') {
+        alert('Por favor, selecciona una puntuación válida entre 0 y 10.');
         return;
       }
 
-      try {
-        await db.collection("responses").add({
-          score: Number(score),
-          comment,
-          timestamp: new Date().toISOString()
-        });
+      db.collection("responses").add({
+        score: Number(score),
+        comment: comment,
+        timestamp: new Date().toISOString()
+      }).then(() => {
         localStorage.setItem(ALREADY_ANSWERED_KEY, 'true');
         document.getElementById('form').classList.add('hidden');
         document.getElementById('thankyou').classList.remove('hidden');
-      } catch (error) {
-        alert('Error al guardar en Firebase');
-        console.error(error);
-      }
+      }).catch((e) => {
+        alert('Error al guardar la respuesta en Firebase.');
+        console.error("Error adding document: ", e);
+      });
     }
 
     document.getElementById('showResultsBtn').addEventListener('click', () => {
@@ -180,15 +175,16 @@
     async function showResults() {
       const snapshot = await db.collection("responses").get();
       const data = snapshot.docs.map(doc => doc.data());
-      const tbody = document.querySelector("#resultTable tbody");
-      tbody.innerHTML = '';
+
+      const list = document.getElementById('resultList');
+      list.innerHTML = "";
 
       let promoters = 0, passives = 0, detractors = 0;
 
       data.forEach((r, i) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td>${i+1}</td><td>${r.score}</td><td>${r.comment || '—'}</td>`;
-        tbody.appendChild(row);
+        const item = document.createElement('li');
+        item.textContent = `#${i+1}: Puntuación: ${r.score}, Comentario: ${r.comment || '—'}`;
+        list.appendChild(item);
 
         if (r.score >= 9) promoters++;
         else if (r.score >= 7) passives++;
@@ -196,16 +192,19 @@
       });
 
       const total = data.length || 1;
-      const eNPS = Math.round(((promoters / total) - (detractors / total)) * 100);
+      const eNPS = Math.round(((promoters - detractors) / total) * 100);
 
       const ctx = document.getElementById('eNPSChart').getContext('2d');
       new Chart(ctx, {
-        type: 'bar',
+        type: 'doughnut',
         data: {
           labels: ['Promotores', 'Pasivos', 'Detractores'],
           datasets: [{
-            label: 'Nº de respuestas',
-            data: [promoters, passives, detractors],
+            data: [
+              (promoters / total * 100).toFixed(1),
+              (passives / total * 100).toFixed(1),
+              (detractors / total * 100).toFixed(1)
+            ],
             backgroundColor: ['#28a745', '#ffc107', '#dc3545']
           }]
         },
@@ -213,13 +212,23 @@
           plugins: {
             title: {
               display: true,
-              text: `Puntuación eNPS actual: ${eNPS}`,
+              text: `eNPS actual: ${eNPS}`,
               font: { size: 18 }
+            },
+            legend: {
+              position: 'right',
+              labels: {
+                generateLabels: chart => {
+                  const data = chart.data;
+                  return data.labels.map((label, i) => ({
+                    text: `${label} ${data.datasets[0].data[i]}%`,
+                    fillStyle: data.datasets[0].backgroundColor[i],
+                    strokeStyle: '#fff',
+                    lineWidth: 2
+                  }));
+                }
+              }
             }
-          },
-          responsive: true,
-          scales: {
-            y: { beginAtZero: true }
           }
         }
       });
@@ -227,20 +236,21 @@
       document.getElementById('admin').classList.remove('hidden');
     }
 
-    async function resetData() {
+    function resetData() {
       const pass = prompt('Introduce la contraseña para reiniciar:');
-      if (pass !== 'vega2025') {
+      if (pass === 'vega2025') {
+        db.collection("responses").get().then(snapshot => {
+          const batch = db.batch();
+          snapshot.docs.forEach(doc => batch.delete(doc.ref));
+          return batch.commit();
+        }).then(() => {
+          localStorage.removeItem(ALREADY_ANSWERED_KEY);
+          alert('Respuestas eliminadas.');
+          location.reload();
+        });
+      } else {
         alert('Contraseña incorrecta');
-        return;
       }
-
-      const snapshot = await db.collection("responses").get();
-      const batch = db.batch();
-      snapshot.docs.forEach(doc => batch.delete(doc.ref));
-      await batch.commit();
-      localStorage.removeItem(ALREADY_ANSWERED_KEY);
-      alert('Respuestas eliminadas.');
-      location.reload();
     }
   </script>
 </body>
