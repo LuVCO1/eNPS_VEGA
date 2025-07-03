@@ -19,7 +19,6 @@ async function checkIfCanVote() {
   try {
     const tokenDoc = await db.collection("resetToken").doc("resetToken").get();
     const firebaseToken = tokenDoc.exists ? tokenDoc.data().token : "";
-
     const localAnswered = localStorage.getItem(ALREADY_ANSWERED_KEY) === "true";
     const localToken = localStorage.getItem(RESET_TOKEN_KEY);
 
@@ -32,7 +31,31 @@ async function checkIfCanVote() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", checkIfCanVote);
+document.addEventListener("DOMContentLoaded", () => {
+  checkIfCanVote();
+
+  document.getElementById("showResultsBtn").addEventListener("click", () => {
+    document.getElementById("adminLogin").classList.remove("hidden");
+  });
+
+  document.getElementById("adminLoginBtn").addEventListener("click", async () => {
+    const pwd = document.getElementById("adminPassword").value;
+    const ok = await loginAdmin(pwd);
+    const msg = document.getElementById("message");
+
+    if (ok) {
+      msg.textContent = "✅ Bienvenido, admin";
+      msg.style.color = "green";
+      document.getElementById("adminLogin").classList.add("hidden");
+      showResults();
+    } else {
+      msg.textContent = "🚫 Contraseña incorrecta";
+      msg.style.color = "red";
+    }
+  });
+
+  document.getElementById("exportExcelBtn").addEventListener("click", exportToExcel);
+});
 
 function submitResponse() {
   const scoreValue = document.getElementById('score').value;
@@ -74,26 +97,6 @@ async function loginAdmin(password) {
   const hex = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
   return hex === ADMIN_HASH;
 }
-
-document.getElementById("showResultsBtn").addEventListener("click", () => {
-  document.getElementById("adminLogin").classList.remove("hidden");
-});
-
-document.getElementById("adminLoginBtn").addEventListener("click", async () => {
-  const pwd = document.getElementById("adminPassword").value;
-  const ok = await loginAdmin(pwd);
-  const msg = document.getElementById("message");
-
-  if (ok) {
-    msg.textContent = "✅ Bienvenido, admin";
-    msg.style.color = "green";
-    document.getElementById("adminLogin").classList.add("hidden");
-    showResults();
-  } else {
-    msg.textContent = "🚫 Contraseña incorrecta";
-    msg.style.color = "red";
-  }
-});
 
 async function showResults() {
   const snapshot = await db.collection("responses").get();
@@ -141,7 +144,8 @@ async function showResults() {
     }
   });
 
-  document.getElementById("resultSummary").innerHTML = `<p><strong>Respuestas recogidas:</strong> ${total} de 58 empleados (${Math.round((total / 58) * 100)}%)</p>`;
+  document.getElementById("resultSummary").innerHTML =
+    `<p><strong>Respuestas recogidas:</strong> ${total} de 58 empleados (${Math.round((total / 58) * 100)}%)</p>`;
   document.getElementById("admin").classList.remove("hidden");
 }
 
@@ -167,4 +171,33 @@ function resetData() {
     alert("Error al reiniciar datos.");
     console.error(err);
   });
+}
+
+async function exportToExcel() {
+  const snapshot = await db.collection("responses").get();
+  const data = snapshot.docs.map(doc => doc.data());
+
+  let promoters = 0, passives = 0, detractors = 0;
+
+  const rows = [["#", "Puntuación", "Comentario"]];
+
+  data.forEach((r, i) => {
+    rows.push([i + 1, r.score, r.comment || "—"]);
+    if (r.score >= 9) promoters++;
+    else if (r.score >= 7) passives++;
+    else detractors++;
+  });
+
+  const total = data.length || 1;
+  const eNPS = Math.round(((promoters - detractors) / total) * 100);
+
+  rows.push([]);
+  rows.push(["Total respuestas", total]);
+  rows.push(["Puntuación eNPS", `${eNPS}%`]);
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Resultados eNPS");
+
+  XLSX.writeFile(wb, "resultados_eNPS.xlsx");
 }
