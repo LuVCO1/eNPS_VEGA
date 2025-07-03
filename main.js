@@ -1,4 +1,4 @@
-// Configuración de Firebase
+// Config Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCI6wQ1s57ZDLcBpR31vQ-Iu67JEOCnMWk",
   authDomain: "vega-enps.firebaseapp.com",
@@ -14,11 +14,12 @@ const db = firebase.firestore();
 
 const ALREADY_ANSWERED_KEY = 'eNPS_done';
 
-// Comprobación inicial: si ya ha contestado, ocultamos el formulario
-if (localStorage.getItem(ALREADY_ANSWERED_KEY) === 'true') {
-  document.getElementById('form').classList.add('hidden');
-  document.getElementById('thankyou').classList.remove('hidden');
-}
+document.addEventListener("DOMContentLoaded", () => {
+  if (localStorage.getItem(ALREADY_ANSWERED_KEY) === "true") {
+    document.getElementById('form').classList.add('hidden');
+    document.getElementById('thankyou').classList.remove('hidden');
+  }
+});
 
 function submitResponse() {
   const scoreValue = document.getElementById('score').value;
@@ -36,7 +37,7 @@ function submitResponse() {
     comment: comment,
     timestamp: new Date().toISOString()
   }).then(() => {
-    localStorage.setItem(ALREADY_ANSWERED_KEY, 'true');
+    localStorage.setItem(ALREADY_ANSWERED_KEY, "true");
     document.getElementById('form').classList.add('hidden');
     document.getElementById('thankyou').classList.remove('hidden');
   }).catch((error) => {
@@ -44,6 +45,37 @@ function submitResponse() {
     console.error(error);
   });
 }
+
+// Seguridad admin
+const ADMIN_HASH = "119c97e407d977047ca1c5d8df0993bdba8cff86cdb33f49950e69d79e21f927";
+const SALT = "MiSaltSuperSecreto123!";
+
+async function loginAdmin(password) {
+  const data = new TextEncoder().encode(password + SALT);
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  const hex = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+  return hex === ADMIN_HASH;
+}
+
+document.getElementById("showResultsBtn").addEventListener("click", () => {
+  document.getElementById("adminLogin").classList.remove("hidden");
+});
+
+document.getElementById("adminLoginBtn").addEventListener("click", async () => {
+  const pwd = document.getElementById("adminPassword").value;
+  const ok = await loginAdmin(pwd);
+  const msg = document.getElementById("message");
+
+  if (ok) {
+    msg.textContent = "✅ Bienvenido, admin";
+    msg.style.color = "green";
+    document.getElementById("adminLogin").classList.add("hidden");
+    showResults();
+  } else {
+    msg.textContent = "🚫 Contraseña incorrecta";
+    msg.style.color = "red";
+  }
+});
 
 async function showResults() {
   const snapshot = await db.collection("responses").get();
@@ -95,37 +127,6 @@ async function showResults() {
   document.getElementById("admin").classList.remove("hidden");
 }
 
-// Login seguro por hash SHA-256
-const ADMIN_HASH = "119c97e407d977047ca1c5d8df0993bdba8cff86cdb33f49950e69d79e21f927";
-const SALT = "MiSaltSuperSecreto123!";
-
-async function loginAdmin(password) {
-  const data = new TextEncoder().encode(password + SALT);
-  const buf = await crypto.subtle.digest("SHA-256", data);
-  const hex = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
-  return hex === ADMIN_HASH;
-}
-
-document.getElementById("showResultsBtn").addEventListener("click", () => {
-  document.getElementById("adminLogin").classList.remove("hidden");
-});
-
-document.getElementById("adminLoginBtn").addEventListener("click", async () => {
-  const pwd = document.getElementById("adminPassword").value;
-  const ok = await loginAdmin(pwd);
-  const msg = document.getElementById("message");
-
-  if (ok) {
-    msg.textContent = "✅ Bienvenido, admin";
-    msg.style.color = "green";
-    document.getElementById("adminLogin").classList.add("hidden");
-    showResults();
-  } else {
-    msg.textContent = "🚫 Contraseña incorrecta";
-    msg.style.color = "red";
-  }
-});
-
 function resetData() {
   const confirmReset = confirm("¿Estás seguro que quieres eliminar todas las respuestas?");
   if (!confirmReset) return;
@@ -135,7 +136,7 @@ function resetData() {
     snapshot.docs.forEach(doc => batch.delete(doc.ref));
     return batch.commit();
   }).then(() => {
-    localStorage.removeItem(ALREADY_ANSWERED_KEY);
+    localStorage.clear(); // <-- Esto borra todos los flags incluyendo eNPS_done
     alert("Respuestas eliminadas.");
     location.reload();
   });
