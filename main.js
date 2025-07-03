@@ -1,4 +1,4 @@
-// Config Firebase
+// Configuración de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCI6wQ1s57ZDLcBpR31vQ-Iu67JEOCnMWk",
   authDomain: "vega-enps.firebaseapp.com",
@@ -14,7 +14,8 @@ const db = firebase.firestore();
 
 const ALREADY_ANSWERED_KEY = 'eNPS_done';
 
-if (localStorage.getItem(ALREADY_ANSWERED_KEY)) {
+// Comprobación inicial: si ya ha contestado, ocultamos el formulario
+if (localStorage.getItem(ALREADY_ANSWERED_KEY) === 'true') {
   document.getElementById('form').classList.add('hidden');
   document.getElementById('thankyou').classList.remove('hidden');
 }
@@ -94,14 +95,14 @@ async function showResults() {
   document.getElementById("admin").classList.remove("hidden");
 }
 
-// ✅ Login segur
+// Login seguro por hash SHA-256
 const ADMIN_HASH = "119c97e407d977047ca1c5d8df0993bdba8cff86cdb33f49950e69d79e21f927";
 const SALT = "MiSaltSuperSecreto123!";
 
 async function loginAdmin(password) {
   const data = new TextEncoder().encode(password + SALT);
-  const buf  = await crypto.subtle.digest("SHA-256", data);
-  const hex  = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  const hex = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
   return hex === ADMIN_HASH;
 }
 
@@ -111,7 +112,7 @@ document.getElementById("showResultsBtn").addEventListener("click", () => {
 
 document.getElementById("adminLoginBtn").addEventListener("click", async () => {
   const pwd = document.getElementById("adminPassword").value;
-  const ok  = await loginAdmin(pwd);
+  const ok = await loginAdmin(pwd);
   const msg = document.getElementById("message");
 
   if (ok) {
@@ -139,4 +140,5 @@ function resetData() {
     location.reload();
   });
 }
+
 
