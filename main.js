@@ -106,7 +106,7 @@ async function showResults() {
 
   data.forEach((r, i) => {
     const row = document.createElement('tr');
-    row.innerHTML = <td>${i + 1}</td><td>${r.score}</td><td>${r.comment || '—'}</td>;
+    row.innerHTML = `<td>${i + 1}</td><td>${r.score}</td><td>${r.comment || '—'}</td>`;
     tableBody.appendChild(row);
 
     if (r.score >= 9) promoters++;
@@ -131,7 +131,7 @@ async function showResults() {
       plugins: {
         title: {
           display: true,
-          text: Puntuación eNPS actual: ${eNPS}%,
+          text: `Puntuación eNPS actual: ${eNPS}%`,
           font: { size: 18 }
         },
         legend: {
@@ -141,7 +141,7 @@ async function showResults() {
     }
   });
 
-  document.getElementById("resultSummary").innerHTML = <p><strong>Respuestas recogidas:</strong> ${total} de 58 empleados (${Math.round((total / 58) * 100)}%)</p>;
+  document.getElementById("resultSummary").innerHTML = `<p><strong>Respuestas recogidas:</strong> ${total} de 58 empleados (${Math.round((total / 58) * 100)}%)</p>`;
   document.getElementById("admin").classList.remove("hidden");
 }
 
