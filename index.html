@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -138,6 +139,7 @@
         <tbody></tbody>
       </table>
       <button onclick="resetData()" style="background-color:#dc3545;margin-top:2rem;">🗑️ Reiniciar respuestas</button>
+      <button id="exportExcelBtn" style="background-color:#17a2b8;margin-top:1rem;">📁 Exportar a Excel</button>
     </div>
   </div>
 
