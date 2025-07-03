@@ -17,7 +17,7 @@ const RESET_TOKEN_KEY = 'eNPS_token';
 
 async function checkIfCanVote() {
   try {
-    const tokenDoc = await db.collection("config").doc("resetToken").get();
+    const tokenDoc = await db.collection("resetToken").doc("resetToken").get();
     const firebaseToken = tokenDoc.exists ? tokenDoc.data().token : "";
 
     const localAnswered = localStorage.getItem(ALREADY_ANSWERED_KEY) === "true";
@@ -50,7 +50,7 @@ function submitResponse() {
     comment: comment,
     timestamp: new Date().toISOString()
   }).then(async () => {
-    const tokenDoc = await db.collection("config").doc("resetToken").get();
+    const tokenDoc = await db.collection("resetToken").doc("resetToken").get();
     const firebaseToken = tokenDoc.exists ? tokenDoc.data().token : "";
 
     localStorage.setItem(ALREADY_ANSWERED_KEY, "true");
@@ -159,7 +159,7 @@ function resetData() {
     return batch.commit();
   }).then(() => {
     const newToken = generateResetToken();
-    return db.collection("config").doc("resetToken").set({ token: newToken });
+    return db.collection("resetToken").doc("resetToken").set({ token: newToken });
   }).then(() => {
     alert("Respuestas eliminadas. Todos los empleados podrán volver a contestar.");
     location.reload();
