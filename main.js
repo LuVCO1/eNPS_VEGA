@@ -44,15 +44,6 @@ function submitResponse() {
   });
 }
 
-document.getElementById("showResultsBtn").addEventListener("click", () => {
-  const pass = prompt("Introduce la contraseña de admin:");
-  if (pass === atob("dmVnYTIwMjU=")) { // Contraseña: vega2025
-    showResults();
-  } else {
-    alert("Contraseña incorrecta");
-  }
-});
-
 async function showResults() {
   const snapshot = await db.collection("responses").get();
   const data = snapshot.docs.map(doc => doc.data());
@@ -103,20 +94,52 @@ async function showResults() {
   document.getElementById("admin").classList.remove("hidden");
 }
 
-function resetData() {
-  const pass = prompt("Introduce la contraseña para reiniciar:");
-  if (pass === atob("dmVnYTIwMjU=")) { // Contraseña: vega2025
-    db.collection("responses").get().then(snapshot => {
-      const batch = db.batch();
-      snapshot.docs.forEach(doc => batch.delete(doc.ref));
-      return batch.commit();
-    }).then(() => {
-      localStorage.removeItem(ALREADY_ANSWERED_KEY);
-      alert("Respuestas eliminadas.");
-      location.reload();
-    });
-  } else {
-    alert("Contraseña incorrecta");
-  }
+// Nova gestió segura de login admin
+const ADMIN_HASH = "cf425e2586066137dab5fa064b58d2f4c22e406f3d1aa05098106e6bdc9b0bfc";
+const SALT = "MiSaltSuperSecreto123!";
+
+async function loginAdmin(password) {
+  const data = new TextEncoder().encode(password + SALT);
+  const buf  = await crypto.subtle.digest("SHA-256", data);
+  const hex  = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+  return hex === ADMIN_HASH;
 }
+
+// Mostrar formulari quan es clica "Ver Resultados"
+document.getElementById("showResultsBtn").addEventListener("click", () => {
+  document.getElementById("adminLogin").classList.remove("hidden");
+});
+
+// Login admin segur
+document.getElementById("adminLoginBtn").addEventListener("click", async () => {
+  const pwd = document.getElementById("adminPassword").value;
+  const ok  = await loginAdmin(pwd);
+  const msg = document.getElementById("message");
+
+  if (ok) {
+    msg.textContent = "✅ Bienvenido, admin";
+    msg.style.color = "green";
+    document.getElementById("adminLogin").classList.add("hidden");
+    showResults();
+  } else {
+    msg.textContent = "🚫 Contraseña incorrecta";
+    msg.style.color = "red";
+  }
+});
+
+function resetData() {
+  const confirmReset = confirm("¿Estás seguro que quieres eliminar todas las respuestas?");
+  if (!confirmReset) return;
+
+  db.collection("responses").get().then(snapshot => {
+    const batch = db.batch();
+    snapshot.docs.forEach(doc => batch.delete(doc.ref));
+    return batch.commit();
+  }).then(() => {
+    localStorage.removeItem(ALREADY_ANSWERED_KEY);
+    alert("Respuestas eliminadas.");
+    location.reload();
+  });
+}
+
 
