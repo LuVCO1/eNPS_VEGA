@@ -95,7 +95,7 @@ async function showResults() {
 }
 
 // ✅ Login segur
-const ADMIN_HASH = "cf425e2586066137dab5fa064b58d2f4c22e406f3d1aa05098106e6bdc9b0bfc";
+const ADMIN_HASH = "119c97e407d977047ca1c5d8df0993bdba8cff86cdb33f49950e69d79e21f927";
 const SALT = "MiSaltSuperSecreto123!";
 
 async function loginAdmin(password) {
