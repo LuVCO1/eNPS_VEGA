@@ -141,5 +141,3 @@ function resetData() {
     location.reload();
   });
 }
-
-
