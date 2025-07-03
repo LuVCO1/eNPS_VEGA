@@ -94,7 +94,7 @@ async function showResults() {
   document.getElementById("admin").classList.remove("hidden");
 }
 
-// Nova gestió segura de login admin
+// ✅ Login segur
 const ADMIN_HASH = "cf425e2586066137dab5fa064b58d2f4c22e406f3d1aa05098106e6bdc9b0bfc";
 const SALT = "MiSaltSuperSecreto123!";
 
@@ -105,12 +105,10 @@ async function loginAdmin(password) {
   return hex === ADMIN_HASH;
 }
 
-// Mostrar formulari quan es clica "Ver Resultados"
 document.getElementById("showResultsBtn").addEventListener("click", () => {
   document.getElementById("adminLogin").classList.remove("hidden");
 });
 
-// Login admin segur
 document.getElementById("adminLoginBtn").addEventListener("click", async () => {
   const pwd = document.getElementById("adminPassword").value;
   const ok  = await loginAdmin(pwd);
