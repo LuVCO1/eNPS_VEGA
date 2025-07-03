@@ -13,13 +13,26 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 const ALREADY_ANSWERED_KEY = 'eNPS_done';
+const RESET_TOKEN_KEY = 'eNPS_token';
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (localStorage.getItem(ALREADY_ANSWERED_KEY) === "true") {
-    document.getElementById('form').classList.add('hidden');
-    document.getElementById('thankyou').classList.remove('hidden');
+async function checkIfCanVote() {
+  try {
+    const tokenDoc = await db.collection("config").doc("resetToken").get();
+    const firebaseToken = tokenDoc.exists ? tokenDoc.data().token : "";
+
+    const localAnswered = localStorage.getItem(ALREADY_ANSWERED_KEY) === "true";
+    const localToken = localStorage.getItem(RESET_TOKEN_KEY);
+
+    if (localAnswered && localToken === firebaseToken) {
+      document.getElementById('form').classList.add('hidden');
+      document.getElementById('thankyou').classList.remove('hidden');
+    }
+  } catch (err) {
+    console.error("Error al comprobar si se puede votar:", err);
   }
-});
+}
+
+document.addEventListener("DOMContentLoaded", checkIfCanVote);
 
 function submitResponse() {
   const scoreValue = document.getElementById('score').value;
@@ -36,8 +49,13 @@ function submitResponse() {
     score: score,
     comment: comment,
     timestamp: new Date().toISOString()
-  }).then(() => {
+  }).then(async () => {
+    const tokenDoc = await db.collection("config").doc("resetToken").get();
+    const firebaseToken = tokenDoc.exists ? tokenDoc.data().token : "";
+
     localStorage.setItem(ALREADY_ANSWERED_KEY, "true");
+    localStorage.setItem(RESET_TOKEN_KEY, firebaseToken);
+
     document.getElementById('form').classList.add('hidden');
     document.getElementById('thankyou').classList.remove('hidden');
   }).catch((error) => {
@@ -127,6 +145,10 @@ async function showResults() {
   document.getElementById("admin").classList.remove("hidden");
 }
 
+function generateResetToken() {
+  return Math.random().toString(36).substring(2, 12);
+}
+
 function resetData() {
   const confirmReset = confirm("¿Estás seguro que quieres eliminar todas las respuestas?");
   if (!confirmReset) return;
@@ -136,10 +158,13 @@ function resetData() {
     snapshot.docs.forEach(doc => batch.delete(doc.ref));
     return batch.commit();
   }).then(() => {
-    localStorage.clear(); // <-- Esto borra todos los flags incluyendo eNPS_done
-    alert("Respuestas eliminadas.");
+    const newToken = generateResetToken();
+    return db.collection("config").doc("resetToken").set({ token: newToken });
+  }).then(() => {
+    alert("Respuestas eliminadas. Todos los empleados podrán volver a contestar.");
     location.reload();
+  }).catch(err => {
+    alert("Error al reiniciar datos.");
+    console.error(err);
   });
 }
-
-
