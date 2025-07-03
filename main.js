@@ -1,4 +1,4 @@
-// Config Firebase
+import ace_tools as tools; tools.code_for_user(name="main.js", type="javascript", content="""// Config Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCI6wQ1s57ZDLcBpR31vQ-Iu67JEOCnMWk",
   authDomain: "vega-enps.firebaseapp.com",
@@ -17,7 +17,7 @@ const RESET_TOKEN_KEY = 'eNPS_token';
 
 async function checkIfCanVote() {
   try {
-    const tokenDoc = await db.collection("resetToken").doc("resetToken").get();
+    const tokenDoc = await db.collection("config").doc("resetToken").get();
     const firebaseToken = tokenDoc.exists ? tokenDoc.data().token : "";
 
     const localAnswered = localStorage.getItem(ALREADY_ANSWERED_KEY) === "true";
@@ -50,7 +50,7 @@ function submitResponse() {
     comment: comment,
     timestamp: new Date().toISOString()
   }).then(async () => {
-    const tokenDoc = await db.collection("resetToken").doc("resetToken").get();
+    const tokenDoc = await db.collection("config").doc("resetToken").get();
     const firebaseToken = tokenDoc.exists ? tokenDoc.data().token : "";
 
     localStorage.setItem(ALREADY_ANSWERED_KEY, "true");
@@ -95,9 +95,12 @@ document.getElementById("adminLoginBtn").addEventListener("click", async () => {
   }
 });
 
+let lastResponses = [];
+
 async function showResults() {
   const snapshot = await db.collection("responses").get();
   const data = snapshot.docs.map(doc => doc.data());
+  lastResponses = data;
 
   let promoters = 0, passives = 0, detractors = 0;
 
@@ -159,7 +162,7 @@ function resetData() {
     return batch.commit();
   }).then(() => {
     const newToken = generateResetToken();
-    return db.collection("resetToken").doc("resetToken").set({ token: newToken });
+    return db.collection("config").doc("resetToken").set({ token: newToken });
   }).then(() => {
     alert("Respuestas eliminadas. Todos los empleados podrán volver a contestar.");
     location.reload();
@@ -168,3 +171,27 @@ function resetData() {
     console.error(err);
   });
 }
+
+document.getElementById("exportExcelBtn").addEventListener("click", () => {
+  if (!lastResponses.length) {
+    alert("No hay datos para exportar");
+    return;
+  }
+
+  const rows = [["Motivo de la puntuación", "Puntuación", "Tipo"]];
+  lastResponses.forEach(r => {
+    let tipo = "";
+    if (r.score >= 9) tipo = "Promotor";
+    else if (r.score >= 7) tipo = "Pasivo";
+    else tipo = "Detractor";
+
+    rows.push([r.comment || "—", r.score, tipo]);
+  });
+
+  const worksheet = XLSX.utils.aoa_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "eNPS");
+
+  XLSX.writeFile(workbook, "eNPS_resultados.xlsx");
+});
+""")
