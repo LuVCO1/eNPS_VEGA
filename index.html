@@ -43,7 +43,7 @@
       display: block;
       margin: 1rem 0 0.5rem;
     }
-    select, textarea {
+    select, textarea, input[type="password"] {
       width: 100%;
       padding: 0.8rem;
       border: 1px solid #ccc;
@@ -120,6 +120,13 @@
       <button id="showResultsBtn" style="background-color:#007bff;margin-top:2rem;">Ver Resultados</button>
     </div>
 
+    <div id="adminLogin" class="hidden">
+      <label for="adminPassword">🔐 Contraseña de administrador:</label>
+      <input type="password" id="adminPassword" placeholder="Introduce la contraseña">
+      <p id="message"></p>
+      <button id="adminLoginBtn" style="margin-top:1rem;">Acceder</button>
+    </div>
+
     <div id="admin" class="hidden">
       <h3>📈 Resultados recogidos</h3>
       <div id="resultSummary"></div>
@@ -134,8 +141,6 @@
     </div>
   </div>
 
-  <!-- Vinculación al JS externo -->
   <script src="main.js"></script>
 </body>
 </html>
-
