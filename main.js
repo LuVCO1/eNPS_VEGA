@@ -112,8 +112,8 @@ async function showResults() {
     row.innerHTML = `<td>${i + 1}</td><td>${r.score}</td><td>${r.comment || '—'}</td>`;
     tableBody.appendChild(row);
 
-    if (r.score >= 9) promoters++;
-    else if (r.score >= 7) passives++;
+    if (r.score >= 8) promoters++;
+    else if (r.score >= 6) passives++;
     else detractors++;
   });
 
