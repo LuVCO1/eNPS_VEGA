@@ -183,8 +183,8 @@ async function exportToExcel() {
 
   data.forEach((r, i) => {
     rows.push([i + 1, r.score, r.comment || "—"]);
-    if (r.score >= 9) promoters++;
-    else if (r.score >= 7) passives++;
+    if (r.score >= 8) promoters++;
+    else if (r.score >= 6) passives++;
     else detractors++;
   });
 
