@@ -78,9 +78,27 @@
       padding: 0.6rem;
       text-align: left;
     }
-    th {
-      background-color: #f8f8f8;
+    th { background-color: #f8f8f8; }
+
+    /* Badges eNPS US/EU */
+    .bench {
+      display: flex;
+      gap: .75rem;
+      justify-content: center;
+      align-items: center;
+      margin-top: 1rem;
+      flex-wrap: wrap;
     }
+    .pill {
+      border-radius: 999px;
+      padding: .4rem .9rem;
+      font-weight: 600;
+      font-size: .95rem;
+      border: 1px solid #e3e3e3;
+      background: #fafafa;
+    }
+    .pill strong { margin-right: .35rem; }
+
     @media (max-width: 600px) {
       .container { margin: 1rem; padding: 1.5rem; }
     }
@@ -133,7 +151,15 @@
     <div id="admin" class="hidden">
       <h3>📈 Resultados recogidos</h3>
       <div id="resultSummary"></div>
+
       <canvas id="eNPSChart" width="400" height="300"></canvas>
+
+      <!-- Badges con eNPS por esquema -->
+      <div class="bench">
+        <span class="pill"><strong>eNPS (EE. UU.)</strong> <span id="enpsUS">—</span></span>
+        <span class="pill"><strong>eNPS (Europa)</strong> <span id="enpsEU">—</span></span>
+      </div>
+
       <table id="resultTable">
         <thead>
           <tr><th>#</th><th>Puntuación</th><th>Comentario</th></tr>
@@ -148,6 +174,3 @@
   <script src="main.js"></script>
 </body>
 </html>
-
-
-
